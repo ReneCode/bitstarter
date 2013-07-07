@@ -61,6 +61,7 @@ var checkHtmlFile = function(htmlfile, checksfile) {
 
 var buildfn = function(tmpfile, checksfile, url) {
   var fn = function(result, response) {
+     // that function is called, when REST returns asynchron !!
      if (result instanceof Error) {
 	console.error('Error reading URL:' + url);
      } else {
@@ -92,14 +93,15 @@ if(require.main == module) {
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
 	.option('-u, --url <url>', 'URL to check')  
         .parse(process.argv);
-    var checkJson;
+    
     if (program.url) {
-        checkJson = checkUrl(program.url, program.checks);
+        checkUrl(program.url, program.checks);
     }
     else {
- 	checkJson = checkHtmlFile(program.file, program.checks);
+ 	var checkJson = checkHtmlFile(program.file, program.checks);
 	var outJson = JSON.stringify(checkJson, null, 4);
     	console.log(outJson);
+   }
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
