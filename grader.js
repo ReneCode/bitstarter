@@ -26,6 +26,8 @@ var program = require('commander');
 var cheerio = require('cheerio');
 var HTMLFILE_DEFAULT = "index.html";
 var CHECKSFILE_DEFAULT = "checks.json";
+var rest = require('restler');
+var util = require('util');
 
 var assertFileExists = function(infile) {
     var instr = infile.toString();
@@ -55,6 +57,29 @@ var checkHtmlFile = function(htmlfile, checksfile) {
     return out;
 };
 
+
+
+var buildfn = function(tmpfile, checksfile, url) {
+  var fn = function(result, response) {
+     if (result instanceof Error) {
+	console.error('Error reading URL:' + url);
+     } else {
+        fs.writeFileSync(tmpfile, result);
+        var checkJson = checkHtmlFile(tmpfile, checksfile);
+        var outJson = JSON.stringify(checkJson, null, 4);
+        console.log(outJson);
+     }
+  }
+  return fn;
+}
+
+
+var checkUrl = function(url, checksfile) {
+     var tmpfile = './tmp.txt';
+     var fn = buildfn(tmpfile, checksfile, url);
+     rest.get(url).on('complete', fn );
+}
+
 var clone = function(fn) {
     // Workaround for commander.js issue.
     // http://stackoverflow.com/a/6772648
@@ -65,10 +90,16 @@ if(require.main == module) {
     program
         .option('-c, --checks <check_file>', 'Path to checks.json', clone(assertFileExists), CHECKSFILE_DEFAULT)
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
+	.option('-u, --url <url>', 'URL to check')  
         .parse(process.argv);
-    var checkJson = checkHtmlFile(program.file, program.checks);
-    var outJson = JSON.stringify(checkJson, null, 4);
-    console.log(outJson);
+    var checkJson;
+    if (program.url) {
+        checkJson = checkUrl(program.url, program.checks);
+    }
+    else {
+ 	checkJson = checkHtmlFile(program.file, program.checks);
+	var outJson = JSON.stringify(checkJson, null, 4);
+    	console.log(outJson);
 } else {
     exports.checkHtmlFile = checkHtmlFile;
 }
