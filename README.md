@@ -12,3 +12,7 @@ All homework is stored in this repository
 
 now enter real content
 
+-----
+let's start HW6
+
+
